@@ -1,0 +1,244 @@
+
+import lejos.nxt.*;
+
+import java.io.*;
+
+import lejos.nxt.comm.*;
+import lejos.robotics.DCMotor;
+import lejos.util.Delay;
+import lejos.nxt.addon.RCXMotor;
+import lejos.robotics.DCMotor;
+
+/**
+* Test of Java streams over USB.
+* Run the PC example, USBSend, to send data.
+* 
+* @author Lawrie Griffiths
+*
+*/
+public class Button_Sensor {
+
+	public static void main(String [] args) throws Exception 
+	{
+		USBConnection conn = USB.waitForConnection();
+		DataOutputStream dOut = conn.openDataOutputStream();
+		DataInputStream dIn = conn.openDataInputStream();
+		TouchSensor touch1 = new TouchSensor( SensorPort.S1 );
+		TouchSensor touch2 = new TouchSensor( SensorPort.S2 );
+		TouchSensor touch3 = new TouchSensor( SensorPort.S3 );
+		
+		LCD.drawString("sending US data 2 PC thru USB", 0, 0);
+		int gostop = 1, flag = 0, x=1;
+		//flag for moving from touch to button
+		gostop=dIn.readInt();
+		
+		while(flag == 0)
+		{
+			//Sends NXT the column number 
+			while( (gostop >0 && gostop < 8))
+			{
+				
+				if(gostop == 7 )
+				{
+					Motor.B.rotate(-550);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+					
+					Motor.B.rotate(550);
+				}
+				if(gostop == 6 )
+				{
+					Motor.B.rotate(-(550+300));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+
+					//Thread.sleep(5000);
+					Motor.B.rotate((550+300));
+				}
+				if(gostop == 5 )
+				{
+					Motor.B.rotate(-(550+600));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+
+					//Thread.sleep(5000);
+					Motor.B.rotate((550+600));
+				}
+
+				if(gostop == 4 )
+				{
+					Motor.B.rotate(-(550+900));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+
+					Motor.B.rotate((550+900));
+				}
+				if(gostop == 3 )
+				{
+					Motor.B.rotate(-(550+1100));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+					Motor.B.rotate((550+1100));
+				}
+				if(gostop == 2 )
+				{
+					Motor.B.rotate(-(550+1300));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+					Motor.B.rotate((550+1300));
+				}
+				if(gostop == 1 )
+				{
+					Motor.B.rotate(-(550+1510));
+					//Motor.B.rotate(0);
+					DCMotor dcm = new RCXMotor(MotorPort.A);
+
+					dcm.setPower(100);
+
+					dcm.backward();
+
+					Delay.msDelay(1000);
+
+					dcm.stop(); 
+					Motor.B.rotate((550+1480));
+				}
+					System.out.println("\n");
+					
+					//Checks is touch sensor is pressed
+					if(touch1.isPressed()|| touch2.isPressed() || touch3.isPressed())
+					{
+						dOut.writeInt(0);
+						dOut.flush();
+				        LCD.drawString("Touch",0,4);
+				        try {
+				        	Thread.sleep(33);
+				        } catch (InterruptedException ie) {}
+				        
+					}
+					else
+					{
+						dOut.writeInt(1);
+						dOut.flush();
+				        LCD.drawString("In else Touch",0,4);
+				        try {
+				        	Thread.sleep(33);
+				        } catch (InterruptedException ie) {}					
+					}
+
+			        
+					try
+			        {
+			            gostop = dIn.readInt();
+			            LCD.drawInt(gostop, 0, 3);
+			        }
+			        catch (EOFException e) 
+			        {
+			            break;
+			        }
+				}//end of while
+							
+				
+			//Robot stops if touch sensors are pressed
+			while(gostop == 0)
+			{
+				if(touch1.isPressed()|| touch2.isPressed() || touch3.isPressed())
+				{
+					dOut.writeInt(0);
+					dOut.flush();
+			        LCD.drawString("Touch",0,4);
+			        try {
+			        	Thread.sleep(33);
+			        } catch (InterruptedException ie) {}
+			        
+				}
+				else
+				{
+					dOut.writeInt(1);
+					dOut.flush();
+			        LCD.drawString("In else Touch",0,4);
+			        try {
+			        	Thread.sleep(33);
+			        } catch (InterruptedException ie) {}					
+				}
+				
+				try
+				{
+					gostop = dIn.readInt();
+					
+					LCD.drawInt(gostop, 0, 3);
+				}
+				catch (EOFException e) 
+				{ 
+					break;
+				}
+				
+				if(gostop == 0)
+				{
+					Motor.B.rotate(0);
+					LCD.drawString("Touch Sensor", 0, 5);		
+				}
+				//gostop =0;
+			}
+		}
+	
+		try {
+			dOut.close();
+			dIn.close();
+		} catch (IOException ioe) {
+		}
+		try {
+			Thread.sleep(200);
+		} catch (InterruptedException ie) {}
+				
+		conn.close();
+		
+	}
+}
+
