@@ -7,6 +7,8 @@
  *
  * game grid with 7 cols and 6 rows.'
  
+  * Credits: Joon Lee.
+ 
  */
 package Connect_4;
 
