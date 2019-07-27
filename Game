@@ -4,6 +4,7 @@
 * This part of the program (is PC side) communicates with the NXT side program.
 * It sends the decision of the robot (The column number where robot should drop the coin) to the NXT 
 
+* Author: Parameshwari Tirupari and Nikitha Subramanian.
 */
 package Connect_4;
 
