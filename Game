@@ -1,0 +1,475 @@
+package Connect_4;
+
+import java.util.Timer;
+import java.util.TimerTask;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Panel;
+import java.awt.Point;
+import java.awt.TextArea;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+import com.github.sarxos.webcam.*;
+
+import lejos.pc.comm.NXTComm;
+import lejos.pc.comm.NXTCommException;
+import lejos.pc.comm.NXTCommFactory;
+import lejos.pc.comm.NXTInfo;
+
+
+public class Random extends JFrame implements ActionListener{
+	
+	private static final long serialVersionUID = 1L;
+	protected VideoPanel videopanel = new VideoPanel();
+	protected ConnectFourModel cfm = new ConnectFourModel();
+	protected ConnectFourGUI gui = new ConnectFourGUI(cfm, 3, -1); //Initial case row=-1 col=3	
+	private Timer timer = new Timer();
+	protected int threshold = 180;
+	protected NXTComm nxtComm;  
+	protected NXTInfo[] nxtInfo = null;
+	protected InputStream is;
+	protected OutputStream os ;
+	protected DataInputStream inDat;
+	protected DataOutputStream outDat;
+	Button b1,b2;
+	TextField text1 = new TextField(30);
+	TextField text2 = new TextField(30);
+	TextArea textarea = new TextArea(8,15);
+	int x=1, random,max_row = 6, max_col = 7, col = 0 ,a = 0;
+		
+	public Random() throws NXTCommException
+	{	
+		//NXT starts
+		nxtComm = NXTCommFactory.createNXTComm(NXTCommFactory.USB);
+    	
+		try {
+			//nxtInfo = nxtComm.search(null,NXTCommFactory.USB);
+			//if only 1 usb is connected, search() needs only null as its parameter
+			nxtInfo = nxtComm.search(null);
+		} catch (NXTCommException e) {
+			System.out.println("Exception in search");
+		}
+		
+		if (nxtInfo.length == 0) {
+			System.out.println("No NXT Found");
+			System.exit(1);
+		}
+
+		try {
+			nxtComm.open(nxtInfo[0]);
+		} catch (NXTCommException e) {
+			System.out.println("Exception in open");
+		}
+		is = nxtComm.getInputStream();
+		os = nxtComm.getOutputStream();
+	    inDat = new DataInputStream(is);
+		outDat = new DataOutputStream(os);	
+		//NXT ends
+		
+		//Creating a panel and adding components to it
+		setLayout(new BorderLayout());
+		Panel panel = new Panel();
+		b1 = new Button("Turns");
+		b2 = new Button("Restart");
+        panel.add(b1); panel.add(b2);panel.add(text1);
+        panel.add(text2);panel.add(textarea);
+        
+        //Adding panel and image capture to the application
+        add(panel,BorderLayout.NORTH);
+		add(videopanel, BorderLayout.CENTER);
+		
+		setLocationRelativeTo(null);
+		pack();
+		setVisible(true);
+		
+		//Listeners for each button
+		b1.addActionListener(this);
+		b2.addActionListener(this);
+		
+		//1000 - Initial Delay
+		//33 - rate
+		timer.schedule(new get_and_procssAImageTimerTask(),1000,33);
+
+	}
+	
+	class get_and_procssAImageTimerTask extends TimerTask
+	{
+		public void run()
+		{
+			Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+			try {
+				videopanel.show_and_processImage();
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+    	
+		//Configuration for touch sensor
+    	while(x==0)
+        {
+    		try {
+				   outDat.writeInt(0); // Touch sensor
+				   outDat.flush();
+				} catch (IOException ioe) {
+				   System.out.println("IO Exception writing bytes");
+			 }
+    		
+    		try {x = inDat.readInt();}
+	         catch (IOException ioe) {
+	           System.out.println(ioe);
+	         }            
+	         System.out.println("Received touch "+x);
+    	}
+
+    	//Allowing the robot to take turn to drop the coin
+    	if(e.getSource() == b1)
+    	{    		
+    	   //ConnectFourGUI starts	
+    	   
+    		//Giving the board value to grid[][] and assuming robot is player
+    	   cfm.setGrid(videopanel.board, 2);
+
+		   Minimax comp = new Minimax(gui.model.getGrid(),gui.diff);
+	       //col value to drop coin by robot
+		   col = comp.calcValue();    
+		   //row value to drop coin by robot
+		   a = gui.model.drop(col);	  
+		  
+		  //ConnectFourGUI ends
+		   
+		 //Sending the column number to NXT for the robot to drop the coins
+    	   if(videopanel.board[col][0] == 0)
+		   {
+			   try {
+			   text1.setText("Turn for the robot to play at colno:"+(col+1));
+			   outDat.writeInt(col+1); // start gathering data
+			   outDat.flush();
+				} catch (IOException ioe) {
+				   System.out.println("IO Exception writing bytes");
+				 }
+			   
+	    		try {x = inDat.readInt();}
+		         catch (IOException ioe) {
+		           System.out.println(ioe);
+		         }  
+	    		
+	    		text1.setText("Turn for the human to play!!");
+		        System.out.println("Received b1 "+x);  
+				   
+		   }
+    		else
+    		{
+    			text1.setText("Please do press the button again!!");    			
+    		}
+    			   
+    	}
+    	
+    	//Restarts the game to its initial state
+    	if(e.getSource() == b2)
+    	{
+    		//cfm.reset();
+    		//gui.repaint();
+    		videopanel.createBoard();
+    		videopanel.repaint();
+    		text2.setText("");
+    	}
+    		
+	}
+
+	class VideoPanel extends JPanel implements MouseListener
+	{
+		private static final long serialVersionUID = 1L;
+		static final int width = 480;
+		static final int height = 360;
+		private Webcam webcam;
+		private BufferedImage img1;
+		Color px = null;
+		int  board[][], r = 0, player = 0;
+		Point p ;
+		
+		public VideoPanel()
+		{
+			setBackground(Color.WHITE);
+			addMouseListener(this);
+			System.out.println("Connect 4 game starts!!");
+			webcam = Webcam.getWebcamByName("Microsoft® LifeCam Studio(TM) 0");
+			webcam.setViewSize(WebcamResolution.VGA.getSize());
+			WebcamPanel webcampanel =  new WebcamPanel(webcam);
+			webcampanel.setImageSizeDisplayed(true);
+		}
+		
+		
+		public void mousePressed(MouseEvent me)
+		{
+		    p = me.getPoint();
+			p.translate(-10, -10);
+			if(p.x >= img1.getWidth() || p.x >= img1.getHeight() || p.x < 0 || p.y < 0)
+				return;
+			px = new Color(img1.getRGB(p.x, p.y));
+		}
+		public void mouseReleased(MouseEvent me){}
+		public void mouseClicked(MouseEvent me){}
+		public void mouseEntered(MouseEvent me){}
+		public void mouseExited(MouseEvent me){}
+		
+		protected void paintComponent(Graphics g)
+		{
+			super.paintComponent(g);
+			if(img1 != null)
+				g.drawImage(img1, 10, 10, img1.getWidth(), img1.getHeight(), null);
+			if(px != null)
+				g.drawString("i :"+p.x + "j:"+p.y+"R:"+px.getRed()+"  G:"+px.getGreen()+"  B:"+px.getBlue(), 40, 150);
+		}
+		
+		//Capturing the image and converting it to 2D array
+		//Checks for winners
+		public void show_and_processImage() throws IOException
+		{
+			img1 = webcam.getImage();
+			createBoard();
+			draw(img1);
+			repaint();
+			display_board();
+			
+			//Check if the game is tie
+			if(gui.model.full())
+					text2.setText("It's a tie!!");
+			
+			//Check for coins 4 in row for horizontal, vertical and diagonal 
+			horizontal();
+			vertical();			
+			diagonal_positive();
+			diagonal_negative();
+			
+			//Check for winners
+			if(player == 1)
+				text2.setText("Human wins!!");
+			if(player == 2)
+				text2.setText("Robot wins!!");
+			if(player == 0)
+				text2.setText("");
+		}
+		
+	
+		//Initializing the game board
+		public void createBoard()
+		{
+			board = new int[7][6];
+			for(int i = 0; i < max_row; i++){
+				for(int j = 0; j < max_col; j++){
+					board[j][i] = 0;
+				}
+			}
+		}
+		
+		//Display the game board in 2D array
+		public void display_board()
+		{
+			textarea.setText("");
+			for(int i = 0 ;i < max_row ; i++ )
+			{
+				for(int j = 0;j < max_col ; j++)
+				{
+					textarea.append(String.valueOf(board[j][i])+" ");
+				}
+				textarea.append("\n");
+			}
+		}
+				
+		//Check for horizontal win
+		public void horizontal()
+		{
+			boolean win;
+			for(int i = 0; i < max_row; i++)
+			{
+				for(int j = 0; j < max_col-4; j++ )
+				{
+					win = true;
+					if(board[j][i] == 0)
+						win = false;
+					else for(int k = 0; k < 4; k++)
+					{
+						if(board[j][i] == 0)
+							win = false;
+						if(board[j][i] != board[j+k][i])
+							win = false;
+					}
+					if(win)
+						player = board[j][i];
+				}
+			}		
+		}
+		
+		//Check for vertical win
+		public void vertical()
+		{
+			boolean win;
+			for(int i = 0; i <= max_row-4; i++)
+			{
+				for(int j = 0; j < max_col; j++ )
+				{
+					win = true;
+					if(board[j][i] == 0)
+						win = false;
+					else for(int k = 0; k < 4; k++)
+					{
+						if(board[j][i] == 0)
+							win = false;
+						if(board[j][i] != board[j][i+k])
+							win = false;
+					}
+					if(win)
+						player = board[j][i];
+				}
+			}
+		}
+		
+		//Check for diagonal win(positive)
+		public void diagonal_positive()
+		{
+			for(int i = max_row-1 ;i > max_row-4; i--)
+			{
+				for(int j = 0;j < 4; j++)
+				{
+					if(board[j][i]!=0 && board[j+1][i-1] == board[j][i] &&
+					   board[j+2][i-2] == board[j][i] && board[j+3][i-3] == board[j][i])
+						player = board[j][i];
+				}
+			}
+		}
+		
+		//Check for diagonal win(negative)
+		public void diagonal_negative()
+		{
+			for(int i = 0 ;i < max_row - (4-1); i++)
+			{
+				for(int j = 0;j < 4; j++)
+				{
+					if(board[j][i]!=0 && board[j+1][i+1] == board[j][i] &&
+					   board[j+2][i+2] == board[j][i] && board[j+3][i+3] == board[j][i])
+						player = board[j][i];
+				}
+			}
+		}
+		
+		//Check for tie situation
+		public void check_for_tie()
+		{
+			int count = 0;
+			for(int i=0; i< max_row; i++)
+			{
+				for(int j=0; j< max_col; j++)
+				{
+					if(board[j][i] != 0)
+						count++;
+				}
+			}
+			if(count == 42)
+				text2.setText("Its a tie!!");
+			
+		}
+		
+		//Creating 2D array form the image captured
+		public void draw(BufferedImage x)
+		{
+			int width1 = x.getWidth();
+			int height1 = x.getHeight();
+			int red, height2;
+			int row=0, col=0, red1=0, green=0, blue=0;
+			int red_avg=0, green_avg=0, blue_avg=0;
+			
+			width1 = width1 / max_col; 
+			width1 = 40;
+			height1 = height1 / max_row; 
+			height1 = 45;
+			height2= height1;
+			
+			for(int i = 40; i < x.getWidth(); i = i+91)
+			{
+				for(int j = 45; j < x.getHeight(); j = j+78)
+				{	
+						Color pixel = new Color(x.getRGB(i, j));
+						for(int z = 1; z < 10; z++)
+						{
+							Color pixel1 = new Color(x.getRGB(i+z, j));
+							red1 += pixel1.getRed();
+							green += pixel1.getGreen();
+							blue += pixel1.getBlue();
+						}
+						for(int z = 1; z < 10; z++)
+						{
+							Color pixel1 = new Color(x.getRGB(i, j+z));
+							red1 += pixel1.getRed();
+							green += pixel1.getGreen();
+							blue += pixel1.getBlue();
+						}
+						red_avg  = (red1 + pixel.getRed())/ 19;
+						green_avg  = (green + pixel.getGreen())/ 19;
+						blue_avg  = (blue + pixel.getBlue())/ 19;
+						red1= 0; green =0; blue= 0;
+						
+						//Evaluation of red coins 
+						if(red_avg> (green_avg + blue_avg)+30)
+							red = 1;
+						
+						//Evaluation of empty slot
+						else if(red_avg < green_avg && blue_avg < green_avg && (green_avg - red_avg) >= 15) 
+							red = 0;
+						
+						//Evaluation of yellow coins 
+						else 
+							red = 2;
+						
+						if(row == max_row && col == max_col )
+							break;
+						else if(height1 != 513 && width1 != 677)
+						{
+							board[col][row] = red;
+							
+							row++;
+							height1 = height1 + 78;
+						}
+				}
+				
+				if(height1 == 513 && row == max_row)
+				{
+					width1 = width1 + 91;
+					height1 = height2;
+					col++;
+					row=0;	
+				}
+			}
+		}
+	}
+	
+
+	public static void main(String[] args) throws NXTCommException 
+	{
+		Random frame = new Random();
+		frame.setTitle("Display RGB values of a pixel");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(400,400);
+		frame.setVisible(true);
+		
+	}
+
+}
