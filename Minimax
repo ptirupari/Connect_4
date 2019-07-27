@@ -1,3 +1,13 @@
+/*
+
+* This program is the one which exactly implements the Minimax algorithm,
+  which acts as the brain of the robot.
+  
+ * It scans the board through the camera and takes a decision on the robots next move.
+
+Credits: Joon Lee
+
+*/
 package Connect_4;
 
 
