@@ -1,3 +1,8 @@
+/**
+* Test of Java streams over USB.
+* Run the PC side program and this program in parallel, to send data.
+* 
+*/
 
 import lejos.nxt.*;
 
@@ -9,13 +14,7 @@ import lejos.util.Delay;
 import lejos.nxt.addon.RCXMotor;
 import lejos.robotics.DCMotor;
 
-/**
-* Test of Java streams over USB.
-* Run the PC example, USBSend, to send data.
-* 
-* @author Lawrie Griffiths
-*
-*/
+
 public class Button_Sensor {
 
 	public static void main(String [] args) throws Exception 
