@@ -1,7 +1,7 @@
 /*
 
-* This is the main program, which makes use of all other classes(ConnectFour GUI, ConnectFour Model and Minimax)
-* This part of the program (is PC side) communicates with the NXT side program 
+* This is the main program, which makes use of all other classes(ConnectFour GUI, ConnectFour Model and Minimax).
+* This part of the program (is PC side) communicates with the NXT side program.
 * It sends the decision of the robot (The column number where robot should drop the coin) to the NXT 
 
 */
