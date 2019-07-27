@@ -1,3 +1,16 @@
+/*
+
+
+*Programmed to create a user friendly GUI (Graphical user interface) 
+* 
+Credits: Joon Lee
+
+
+
+
+
+
+*/
 package Connect_4;
 
 
@@ -30,7 +43,7 @@ public class ConnectFourGUI extends JComponent
 		drawChip(colChip,rowChip);
 
 	}
-
+        /*
 	// Draw a chip red or black depending on who is playing.
 	public void drawChip(int col, int row)
 	{
@@ -90,7 +103,7 @@ public class ConnectFourGUI extends JComponent
 			//g.fillOval(5+x*col,y+y*row,cellPxl,cellPxl);
 			}
 		}
-
+              */
 
 		//Draws the chips already filled in.
 		for (int r = 5; r >= 0; r--)
