@@ -1,3 +1,13 @@
+/*
+
+ * ConnectFourModel.java
+
+ * This class represents the actual game grid ,which reads the board as a 6*7 2Dimensional Array 
+ * The winning player is the first one to have 4 checkers in a row.
+ *
+ * game grid with 7 cols and 6 rows.'
+ 
+ */
 package Connect_4;
 
 
