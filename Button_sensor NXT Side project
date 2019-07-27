@@ -4,6 +4,7 @@
 * This program and PC side program are executed in parallel, and a serial communication will be established.
 * The PC side program will send the column number to this (NXT Side) program, which in turn operates the motor accordingly.
 
+Author: Parameshwari Tirupari and Nikitha Subramanian.
 
 */
 
