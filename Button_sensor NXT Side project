@@ -1,7 +1,10 @@
 /**
-* Test of Java streams over USB.
-* Run the PC side program and this program in parallel, to send data.
-* 
+
+* This the nxt side program.
+* This program and PC side program are executed in parallel, and a serial communication will be established.
+* The PC side program will send the column number to this (NXT Side) program, which in turn operates the motor accordingly.
+
+
 */
 
 import lejos.nxt.*;
